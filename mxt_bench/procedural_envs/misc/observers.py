@@ -293,7 +293,10 @@ class GraphObserver(Observer):
     root_pos = qp.pos[sys.body.index[self.root]]
     joint_angle = {d: sys.joints[d].angle_vel(qp)[0] for d in range(self.max_dof)}
     joint_vel = {d: sys.joints[d].angle_vel(qp)[1] for d in range(self.max_dof)}
-
+    # print(joint_angle)
+    # print(type(joint_angle[0]))
+    # print(joint_vel)
+    
     # index for joints.angle_vel per dof, joint name, parents node
     child_dict = {j.child: (i, j.name, j.parent) for i, j in enumerate(sys.config.joints)}
     actuator_dict = {a.joint: (i, a.name, a.strength) for i, a in enumerate(sys.config.actuators)}
@@ -338,11 +341,24 @@ class GraphObserver(Observer):
         j_name = child_dict[node][1]
         j_dof = self.joint_idx_dict[j_name]['dof']
         j_idx = self.joint_idx_dict[j_name]['index']
+        # angle = jnp.degrees(
+        #     jnp.array([joint_angle[j_dof-1][0][j_idx]])
+        #     )
+        # j_vel = jnp.array([joint_vel[j_dof-1][0][j_idx]])
+        
+        """
+            # original 
+                {0: (array([0.0000000e+00, 8.7266463e-01, 1.1102230e-16, 8.7266463e-01,
+                0.0000000e+00, 8.7266457e-01, 3.3306691e-16, 8.7266463e-01],
+                dtype=float32),)}
+            # now
+                {0: Array([0.000000e+00, 8.726647e-01, 1.110223e-16, 8.726647e-01,
+                0.000000e+00, 8.726647e-01, 3.330669e-16, 8.726647e-01],      dtype=float32)}
+        """
         angle = jnp.degrees(
-            jnp.array([joint_angle[j_dof-1][0][j_idx]])
+            jnp.array([joint_angle[j_dof-1][j_idx]])
             )
-        j_vel = jnp.array([joint_vel[j_dof-1][0][j_idx]])
-        # dummy
+        j_vel = jnp.array([joint_vel[j_dof-1][j_idx]])
         angle2 = None
         j_vel2 = None
         angle3 = None

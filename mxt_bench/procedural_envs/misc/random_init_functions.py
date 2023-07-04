@@ -25,8 +25,11 @@ def annulus_xy_sampler(rng: jnp.ndarray, r_min: float, r_max: float, init_z: flo
   init_y = jnp.sqrt(init_r) * jnp.sin(init_theta)
   init_pos = jnp.concatenate([init_x, init_y])
   # xy -> xyz
-  init_pos = jax.ops.index_update(jnp.zeros(3), jnp.index_exp[0:2], init_pos)
-  init_pos = jax.ops.index_update(init_pos, jnp.index_exp[2], jnp.ones(())*init_z)
+  # init_pos = jax.ops.index_update(jnp.zeros(3), jnp.index_exp[0:2], init_pos)
+  init_pos = jnp.zeros(3).at[0:2].set(init_pos)
+  # init_pos = jax.ops.index_update(init_pos, jnp.index_exp[2], jnp.ones(())*init_z)
+  init_pos = init_pos.at[2].set(jnp.ones(())*init_z)
+  
   return init_pos
 
 
@@ -51,8 +54,11 @@ def rectangle_xy_sampler(rng: jnp.ndarray,
     init_y = y_sample_fn().sample(seed=rng2)
   init_pos = jnp.concatenate([init_x, init_y])
   # xy -> xyz
-  init_pos = jax.ops.index_update(jnp.zeros(3), jnp.index_exp[0:2], init_pos)
-  init_pos = jax.ops.index_update(init_pos, jnp.index_exp[2], jnp.ones(())*init_z)
+  # init_pos = jax.ops.index_update(jnp.zeros(3), jnp.index_exp[0:2], init_pos)
+  init_pos = jnp.zeros(3).at[0:2].set(init_pos)
+  # init_pos = jax.ops.index_update(init_pos, jnp.index_exp[2], jnp.ones(())*init_z)
+  init_pos = init_pos.at[2].set(jnp.ones(())*init_z)
+  
   return init_pos
 
 
@@ -77,8 +83,10 @@ def circular_sector_xy_sampler(rng: jnp.ndarray,
   init_y = jnp.sqrt(init_r) * jnp.sin(init_theta)
   init_pos = jnp.concatenate([init_x, init_y])
   # xy -> xyz
-  init_pos = jax.ops.index_update(jnp.zeros(3), jnp.index_exp[0:2], init_pos)
-  init_pos = jax.ops.index_update(init_pos, jnp.index_exp[2], jnp.ones(())*init_z)
+  # init_pos = jax.ops.index_update(jnp.zeros(3), jnp.index_exp[0:2], init_pos)
+  init_pos = jnp.zeros(3).at[0:2].set(init_pos)
+  # init_pos = jax.ops.index_update(init_pos, jnp.index_exp[2], jnp.ones(())*init_z)
+  init_pos = init_pos.at[2].set(jnp.ones(())*init_z)
   return init_pos
 
 
@@ -91,7 +99,8 @@ def roll_pitch_yaw_uniform_sampler(rng: jnp.ndarray):
 def pitch_yaw_uniform_sampler():
   init_eular = quat2eular(sample_quat_uniform(key=rng))
   # roll -> 0.
-  init_eular = jax.ops.index_update(init_eular, jnp.index_exp[0:1], jnp.zeros(1))
+  # init_eular = jax.ops.index_update(init_eular, jnp.index_exp[0:1], jnp.zeros(1))
+  init_eular = init_eular.at[0:1].set(jnp.zeros(1))
   init_rot = eular2quat(init_eular)
   return init_rot
 
@@ -99,7 +108,9 @@ def pitch_yaw_uniform_sampler():
 def yaw_uniform_sampler():
   init_eular = quat2eular(sample_quat_uniform(key=rng))
   # roll, pitch -> 0.
-  init_eular = jax.ops.index_update(init_eular, jnp.index_exp[0:2], jnp.zeros(2))
+  # init_eular = jax.ops.index_update(init_eular, jnp.index_exp[0:2], jnp.zeros(2))
+  init_eular = init_eular.at[0:2].set(jnp.zeros(2))
+  
   init_rot = eular2quat(init_eular)
   return init_rot
 
@@ -113,5 +124,5 @@ def uniform_z_sampler(rng: jnp.ndarray, z_min: float, z_max: float, const: bool 
   else:
     init_z = low
   # z -> xyz
-  init_pos = jnp.zeros(3).at[jnp.index_exp[2]].set(init_z)
+  init_pos = jnp.zeros(3).at[2].set(init_z)
   return init_pos

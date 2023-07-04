@@ -380,7 +380,7 @@ class CustomComponentEnv(Env):
 
   def reset(self, rng: jnp.ndarray) -> CustomState:
     """Resets the environment to an initial state."""
-    qpos = self.sys.default_angle()
+    qpos = jnp.array(self.sys.default_angle())
     qvel = jnp.zeros((self.sys.num_joint_dof,))
     qp = self.sys.default_qp(joint_angle=qpos, joint_velocity=qvel)
     qp = self.composer.reset_fn(self.sys, qp, rng)

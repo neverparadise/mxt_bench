@@ -4,7 +4,7 @@ import jax
 from brax.envs import State
 from brax.envs import env as brax_env
 from brax import jumpy as jp
-
+from jax.tree_util import tree_map
 from typing import Dict
 
 
@@ -31,9 +31,9 @@ class GoalEvalWrapper(brax_env.Wrapper):
     reset_state = self.env.reset(rng)
     reset_state.metrics['reward'] = reset_state.reward
     eval_metrics = GoalEvalMetrics(
-        current_episode_metrics=jax.tree_map(jp.zeros_like,
+        current_episode_metrics=tree_map(jp.zeros_like,
                                              reset_state.metrics),
-        completed_episodes_metrics=jax.tree_map(
+        completed_episodes_metrics=tree_map(
             lambda x: jp.zeros_like(jp.sum(x)), reset_state.metrics),
         completed_episodes=jp.zeros(()),
         completed_episodes_steps=jp.zeros(()),
@@ -54,7 +54,7 @@ class GoalEvalWrapper(brax_env.Wrapper):
     # the next steps becomes action_repeat
     completed_episodes_steps = state_metrics.completed_episodes_steps + jp.sum(
         nstate.info['steps'] * nstate.done)
-    current_episode_metrics = jax.tree_multimap(
+    current_episode_metrics = tree_map(
         lambda a, b: a + b, state_metrics.current_episode_metrics,
         nstate.metrics)
     completed_episodes = state_metrics.completed_episodes + jp.sum(nstate.done)
@@ -62,10 +62,10 @@ class GoalEvalWrapper(brax_env.Wrapper):
     success_episodes = state_metrics.success_episodes + jp.sum(nstate.done * (1.0 - nstate.info['truncation']))
     final_distance = state_metrics.final_distance + jp.sum(nstate.done * nstate.metrics['distance'])
 
-    completed_episodes_metrics = jax.tree_multimap(
+    completed_episodes_metrics = tree_map(
         lambda a, b: a + jp.sum(b * nstate.done),
         state_metrics.completed_episodes_metrics, current_episode_metrics)
-    current_episode_metrics = jax.tree_multimap(
+    current_episode_metrics = tree_map(
         lambda a, b: a * (1 - nstate.done) + b * nstate.done,
         current_episode_metrics, nstate.metrics)
 

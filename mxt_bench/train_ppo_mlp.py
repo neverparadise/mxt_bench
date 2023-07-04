@@ -19,7 +19,7 @@ from procedural_envs.misc.observers import GraphObserver, EXTRA_ROOT_NODE_DICT
 from procedural_envs.tasks.observation_config import obs_config_dict
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('env', 'ant_reach_4', 'Name of environment to train.')
+flags.DEFINE_string('env', 'centipede_touch_4', 'Name of environment to train.')
 flags.DEFINE_string('obs_config', 'amorpheus', 'Name of observation config to train.')
 flags.DEFINE_integer('total_env_steps', 100000000,
                      'Number of env steps to run training for.')

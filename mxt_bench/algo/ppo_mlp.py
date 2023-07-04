@@ -8,9 +8,11 @@ from brax import envs
 from brax.io import model
 from brax.training import distribution
 from brax.training import networks
-from brax.training import normalization
+from brax.experimental import normalization
+# from brax.training import nor
+
 from brax.training import pmap
-from brax.training.networks import FeedForwardModel
+from brax.training.networks import FeedForwardNetwork
 from brax.training.types import Params
 from brax.training.types import PRNGKey
 
@@ -24,7 +26,7 @@ from flax import linen
 def make_mlp(
     output_size: int,
     hidden_layer_sizes: Tuple[int, ...]
-    ) -> networks.FeedForwardModel:
+    ) -> networks.FeedForwardNetwork:
   policy_module = networks.MLP(
       layer_sizes=hidden_layer_sizes + (output_size,),
       activation=linen.relu,
@@ -36,7 +38,7 @@ def make_mlp_networks(
     policy_params_size: int,
     obs_size: int,
     hidden_layer_sizes: Tuple[int, ...] = (256, 256),
-    ) -> Tuple[FeedForwardModel, FeedForwardModel]:
+    ) -> Tuple[FeedForwardNetwork, FeedForwardNetwork]:
   """Creates mlp models for policy and value functions,
   Args:
     policy_params_size: number of params that a policy network should generate
@@ -60,7 +62,7 @@ def make_mlp_networks(
         return output
 
     module = PolicyModule()
-    model = FeedForwardModel(
+    model = FeedForwardNetwork(
           init=lambda rng: module.init(rng, dummy_obs), apply=module.apply)
     return model
 
@@ -77,7 +79,7 @@ def make_mlp_networks(
         return output
 
     module = ValueModule()
-    model = FeedForwardModel(
+    model = FeedForwardNetwork(
           init=lambda rng: module.init(rng, dummy_obs), apply=module.apply)
     return model
 
@@ -465,15 +467,16 @@ def train(
       batch_size * unroll_length * num_minibatches * action_repeat)
 
   def _minimize_loop(training_state, state):
-    synchro = pmap.is_synchronized(
-        (training_state.optimizer_state, training_state.params,
-         training_state.normalizer_params),
-        axis_name='i')
+    # synchro = pmap.is_synchronized(
+    #     (training_state.optimizer_state, training_state.params,
+    #      training_state.normalizer_params),
+    #     axis_name='i')
+    # synchro = pmap.synchronize_hosts()
     (training_state, state), losses = jax.lax.scan(
         run_epoch, (training_state, state), (),
         length=num_epochs // log_frequency)
     losses = jax.tree_map(jnp.mean, losses)
-    return (training_state, state), losses, synchro
+    return (training_state, state), losses, # synchro
 
   minimize_loop = jax.pmap(_minimize_loop, axis_name='i')
 
@@ -555,9 +558,10 @@ def train(
     t = time.time()
     previous_step = training_state.normalizer_params[0][0]
     # optimization
-    (training_state,
-     state), losses, synchro = minimize_loop(training_state, state)
-    assert synchro[0], (it, training_state)
+    # (training_state,
+    #  state), losses, synchro = minimize_loop(training_state, state)
+    (training_state, state), losses = minimize_loop(training_state, state)
+    # assert synchro[0], (it, training_state)
     jax.tree_map(lambda x: x.block_until_ready(), losses)
     sps = ((training_state.normalizer_params[0][0] - previous_step) /
            (time.time() - t)) * action_repeat
